@@ -105,7 +105,21 @@ module axi_stream_insert_header #(
     wire [DATA_BYTE_WD-1 : 0] combined_keep_1;
     wire [DATA_BYTE_WD-1 : 0] combined_keep_2;
 
-    
+    data_combiner #(
+        .DATA_WD(DATA_WD),
+        .DATA_BYTE_WD(DATA_BYTE_WD),
+        .BYTE_CNT_WD(BYTE_CNT_WD)
+    ) combiner(
+        .data_1(data_to_be_combined_1),
+        .keep_1(keep_to_be_combined_1),
+        .data_2(data_to_be_combined_2),
+        .keep_2(keep_to_be_combined_2),
+        .combined_data_1(combined_data_1),
+        .combined_data_2(combined_data_2),
+        .combine_overflow(combine_overflow),
+        .combined_keep_1(combined_keep_1),
+        .combined_keep_2(combined_keep_2)
+    );
 
     //valid_out_buf
     always_ff @(posedge clk) begin
