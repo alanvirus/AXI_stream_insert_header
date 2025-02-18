@@ -1,4 +1,5 @@
 //测试数据发送模块
+`timescale 1ns / 1ps
 module axi_stream_master #(
     parameter DATA_WD = 32,
     parameter DATA_BYTE_WD = DATA_WD / 8,

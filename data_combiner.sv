@@ -1,4 +1,5 @@
 //数据拼接模块，在axi_stream_insert_header.sv中使用
+`timescale 1ns / 1ps
 module data_combiner #(
     parameter DATA_WD = 32,
     parameter DATA_BYTE_WD = DATA_WD / 8,

@@ -1,4 +1,5 @@
-//skid_buffer模块，用于减少组合路径长度，在axi_stream_insert_header.sv中使用
+//skid_buffer模块，逐级背压，在axi_stream_insert_header.sv中使用
+`timescale 1ns / 1ps
 module skidbuffer #(
     parameter	DW = 8
 ) (

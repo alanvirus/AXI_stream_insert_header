@@ -1,4 +1,5 @@
 //主模块，用于将header插入到AXI Stream数据流开头
+`timescale 1ns / 1ps
 module axi_stream_insert_header #(
     parameter DATA_WD = 32,
     parameter DATA_BYTE_WD = DATA_WD / 8,

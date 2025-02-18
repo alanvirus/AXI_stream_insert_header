@@ -8,6 +8,8 @@ module axi_stream_insert_header_tb;
     parameter AVG_LENGTH = 3;//数据流的平均帧长度
     parameter DATA_NUM = HEADER_NUM*AVG_LENGTH;//数据帧的总数
     parameter NO_INTERRUPT = 0;//是否连续发送，如果为1则连续发送，如果为0则发送之间停顿随机时间
+    
+    integer seed_value;
 
     reg clk;
     reg rst_n;
@@ -38,7 +40,7 @@ module axi_stream_insert_header_tb;
     wire [DATA_BYTE_WD-1:0] keep_out;
     wire last_out;
     reg ready_out;
-    
+
     reg [DATA_BYTE_WD-1:0] valid_values [0:DATA_BYTE_WD-1]; 
     reg [DATA_BYTE_WD-1:0] valid_values_2 [0:DATA_BYTE_WD-1];  
     reg all_1 [0:HEADER_NUM-1];
@@ -139,17 +141,19 @@ module axi_stream_insert_header_tb;
     end
 
     initial begin
+        // seed_value = 12345;  
+        // $urandom(seed_value);
         clk = 1;
         rst_n = 0;
 
         //data和header内容固定，方便测试
         foreach (data_in_test[i]) begin
-            data_in_test[i] = {DATA_WD{1'b1}};
-            // data_in_test[i] = $random; 
+            // data_in_test[i] = {DATA_WD{1'b1}};
+            data_in_test[i] = $urandom; 
         end
         foreach (data_header_test[i]) begin
-            data_header_test[i] = {(DATA_WD/2){2'b01}};
-            // data_header_test[i] = $random; 
+            // data_header_test[i] = {(DATA_WD/2){2'b01}};
+            data_header_test[i] = $urandom; 
         end
         
         //输入数据流长度随机生成（平均长度为AVG_LENGTH可控）
@@ -162,10 +166,16 @@ module axi_stream_insert_header_tb;
             keep_in_test[i] = {DATA_BYTE_WD{1'b1}};
         end
         last_in_test[DATA_NUM-1] = 1'b1;
+        keep_in_test[DATA_NUM-1] = ~valid_values_2[$urandom % DATA_BYTE_WD];
         for (int i = 0; i < HEADER_NUM-1; i++) begin
-            automatic int idx = $urandom_range(0, DATA_NUM-2); 
+            integer idx; 
+            while (1) begin
+                idx = $urandom_range(0, DATA_NUM-2);  
+                if (last_in_test[idx] == 0) 
+                    break;
+            end
             last_in_test[idx] = 1;
-            keep_in_test[idx] = ~valid_values_2[$random % DATA_BYTE_WD];
+            keep_in_test[idx] = ~valid_values_2[$urandom % DATA_BYTE_WD];
         end
        
         //header长度随机生成
@@ -173,7 +183,7 @@ module axi_stream_insert_header_tb;
             valid_values[i] = (1 << (i + 1)) - 1; 
         end
         foreach (keep_header_test[i]) begin
-            keep_header_test[i] = valid_values[$random % DATA_BYTE_WD];  
+            keep_header_test[i] = valid_values[$urandom % DATA_BYTE_WD];  
         end
 
         for(int i = 0; i < HEADER_NUM; i++) begin
