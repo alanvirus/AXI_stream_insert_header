@@ -22,6 +22,6 @@
   - `sim/axi_stream_insert_header_tb_behav_HEADER_NUM_3.wcfg`:三次请求版本
 
 - **仿真报告**:
-  - `simulation_report.pdf`：仿真报告描述了仿真架构、激励设计以及验证的各种情形。通过网址https://deadpan-suede-0e1.notion.site/simulation-report-19dbf202d44f8051bebef07c5acb8060?pvs=4可访问在线版本，格式更美观。
+  - `simulation_report.pdf`：仿真报告描述了仿真架构、激励设计以及验证的各种情形。通过网址 https://deadpan-suede-0e1.notion.site/simulation-report-19dbf202d44f8051bebef07c5acb8060?pvs=4 可访问在线版本，格式更美观。
 
 
