@@ -1,4 +1,4 @@
-`default_nettype none
+//skid_buffer模块，用于减少组合路径长度，在axi_stream_insert_header.sv中使用
 module skidbuffer #(
     parameter	DW = 8
 ) (

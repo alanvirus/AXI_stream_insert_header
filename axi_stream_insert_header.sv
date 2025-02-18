@@ -1,4 +1,4 @@
-
+//主模块，用于将header插入到AXI Stream数据流开头
 module axi_stream_insert_header #(
     parameter DATA_WD = 32,
     parameter DATA_BYTE_WD = DATA_WD / 8,
@@ -27,7 +27,7 @@ module axi_stream_insert_header #(
     input [BYTE_CNT_WD-1 : 0] byte_insert_cnt,
     output ready_insert
 );
-    //data输入端未使用skidbuffer
+    //data输入端未使用skidbuffer,可以添加
     logic ready_in_wire;
 
     //输出端skidbuffer
@@ -90,8 +90,8 @@ module axi_stream_insert_header #(
     end
     always_comb begin
         if(valid_out_buf&&need_head&&!last_out_buf)begin
-            data_to_be_combined_2 = 0;
-            keep_to_be_combined_2 = 0;
+            data_to_be_combined_2 = '0;
+            keep_to_be_combined_2 = '0;
         end else begin
             data_to_be_combined_2 = data_in;
             keep_to_be_combined_2 = keep_in;
@@ -157,8 +157,8 @@ module axi_stream_insert_header #(
     //data_out_buf,keep_out_buf
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            data_out_buf <=0;
-            keep_out_buf <=0;
+            data_out_buf <='0;
+            keep_out_buf <='0;
         end else begin
             if(valid_out_buf&&!ready_out_buf)begin
             end else begin
@@ -170,8 +170,8 @@ module axi_stream_insert_header #(
     //next_head_buf,next_keep_buf
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            next_head_buf <= 0;
-            next_keep_buf <= 0;
+            next_head_buf <= '0;
+            next_keep_buf <= '0;
         end else begin
             if(valid_out_buf&&!ready_out_buf)begin
             end else if(!valid_out_buf&&!need_head&&!valid_in)begin

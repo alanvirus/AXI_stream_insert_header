@@ -1,3 +1,4 @@
+//数据拼接模块，在axi_stream_insert_header.sv中使用
 module data_combiner #(
     parameter DATA_WD = 32,
     parameter DATA_BYTE_WD = DATA_WD / 8,
@@ -14,7 +15,7 @@ module data_combiner #(
     output wire [DATA_BYTE_WD-1:0]  combined_keep_2
 );
 
-    logic [BYTE_CNT_WD-1:0] cnt1, cnt2;
+    logic [BYTE_CNT_WD:0] cnt1, cnt2;
 
     always_comb begin
         cnt1 = 0;
