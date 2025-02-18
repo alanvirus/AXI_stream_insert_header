@@ -4,7 +4,7 @@ module axi_stream_insert_header_tb;
     parameter DATA_WD = 32;
     parameter DATA_BYTE_WD = DATA_WD / 8;
     parameter BYTE_CNT_WD = $clog2(DATA_BYTE_WD);
-    parameter HEADER_NUM = 2;//传输数据流的总数
+    parameter HEADER_NUM = 3;//传输数据流的总数
     parameter AVG_LENGTH = 3;//数据流的平均帧长度
     parameter DATA_NUM = HEADER_NUM*AVG_LENGTH;//数据帧的总数
     parameter NO_INTERRUPT = 0;//是否连续发送，如果为1则连续发送，如果为0则发送之间停顿随机时间
@@ -177,6 +177,9 @@ module axi_stream_insert_header_tb;
             last_in_test[idx] = 1;
             keep_in_test[idx] = ~valid_values_2[$urandom % DATA_BYTE_WD];
         end
+        // last_in_test[1]=1'b1;
+        // last_in_test[4]=1'b0;
+        // keep_in_test[1]=4'b1110;
        
         //header长度随机生成
         for (int i = 0; i < DATA_BYTE_WD; i++) begin
@@ -185,6 +188,7 @@ module axi_stream_insert_header_tb;
         foreach (keep_header_test[i]) begin
             keep_header_test[i] = valid_values[$urandom % DATA_BYTE_WD];  
         end
+        // keep_header_test[0]= 4'b1111;
 
         for(int i = 0; i < HEADER_NUM; i++) begin
             all_1[i] = 1;
