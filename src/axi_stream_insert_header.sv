@@ -72,22 +72,22 @@ module axi_stream_insert_header #(
     reg [DATA_WD-1 : 0] next_head_buf_reg;
     reg [DATA_BYTE_WD-1 : 0] next_keep_buf_reg;
     //用于拼接的两个数据
-    logic [DATA_WD-1:0] data_to_be_combined_1_wire;
-    logic [DATA_BYTE_WD-1:0] keep_to_be_combined_1_wire;
-    logic [DATA_WD-1:0] data_to_be_combined_2_wire;
-    logic [DATA_BYTE_WD-1:0] keep_to_be_combined_2_wire;
+    reg [DATA_WD-1:0] data_to_be_combined_1_reg;
+    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_1_reg;
+    reg [DATA_WD-1:0] data_to_be_combined_2_reg;
+    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_2_reg;
     always_comb begin
         if((!valid_out_buf_reg&&need_head_reg)||(valid_out_buf_reg&&need_head_reg&&last_out_buf_reg))begin
-            {data_to_be_combined_1_wire, keep_to_be_combined_1_wire} = {data_header_buf_wire, keep_header_buf_wire};
+            {data_to_be_combined_1_reg, keep_to_be_combined_1_reg} = {data_header_buf_wire, keep_header_buf_wire};
         end else begin
-            {data_to_be_combined_1_wire, keep_to_be_combined_1_wire} = {next_head_buf_reg, next_keep_buf_reg};
+            {data_to_be_combined_1_reg, keep_to_be_combined_1_reg} = {next_head_buf_reg, next_keep_buf_reg};
         end
     end
     always_comb begin
         if(valid_out_buf_reg&&need_head_reg&&!last_out_buf_reg)begin
-            {data_to_be_combined_2_wire, keep_to_be_combined_2_wire} = '0;
+            {data_to_be_combined_2_reg, keep_to_be_combined_2_reg} = '0;
         end else begin
-            {data_to_be_combined_2_wire, keep_to_be_combined_2_wire} = {data_in, keep_in};
+            {data_to_be_combined_2_reg, keep_to_be_combined_2_reg} = {data_in, keep_in};
         end
     end
     //拼接后的数据，1左侧贴靠，2右侧贴靠
@@ -101,10 +101,10 @@ module axi_stream_insert_header #(
         .DATA_BYTE_WD(DATA_BYTE_WD),
         .BYTE_CNT_WD(BYTE_CNT_WD)
     ) combiner(
-        .data_1(data_to_be_combined_1_wire),
-        .keep_1(keep_to_be_combined_1_wire),
-        .data_2(data_to_be_combined_2_wire),
-        .keep_2(keep_to_be_combined_2_wire),
+        .data_1(data_to_be_combined_1_reg),
+        .keep_1(keep_to_be_combined_1_reg),
+        .data_2(data_to_be_combined_2_reg),
+        .keep_2(keep_to_be_combined_2_reg),
         .combined_data_1(combined_data_1_wire),
         .combined_data_2(combined_data_2_wire),
         .combine_overflow(combine_overflow_wire),
