@@ -9,57 +9,53 @@ module data_combiner #(
     input wire [DATA_BYTE_WD-1:0]  keep_1,
     input wire [DATA_WD-1:0]        data_2,
     input wire [DATA_BYTE_WD-1:0]  keep_2,
-    output wire [DATA_WD-1:0]       combined_data_1,
-    output wire [DATA_WD-1:0]       combined_data_2,
+    output reg [DATA_WD-1:0]       combined_data_1_wire,
+    output reg [DATA_WD-1:0]       combined_data_2_wire,
     output wire                     combine_overflow,
-    output wire [DATA_BYTE_WD-1:0]  combined_keep_1,
-    output wire [DATA_BYTE_WD-1:0]  combined_keep_2
+    output reg [DATA_BYTE_WD-1:0]  combined_keep_1_wire,
+    output reg [DATA_BYTE_WD-1:0]  combined_keep_2_wire
 );
 
-    reg [BYTE_CNT_WD:0] cnt1_reg, cnt2_reg;
+    reg [BYTE_CNT_WD:0] cnt1_wire, cnt2_wire;
     always_comb begin
-        cnt1_reg = 0;
+        cnt1_wire = 0;
         for (int i = DATA_BYTE_WD-1; i >= 0; i--) begin
             if (keep_1[i]) begin
-                cnt1_reg++;
+                cnt1_wire++;
             end
         end
     end
     always_comb begin
-        cnt2_reg = 0;
+        cnt2_wire = 0;
         for (int i = DATA_BYTE_WD-1; i >= 0; i--) begin
             if (keep_2[i]) begin
-                cnt2_reg++;
+                cnt2_wire++;
             end
         end
     end
     wire [31:0] total_bytes_wire;
     wire [31:0] total_bits_wire;
-    assign total_bytes_wire = cnt1_reg + cnt2_reg;
+    assign total_bytes_wire = cnt1_wire + cnt2_wire;
     assign total_bits_wire = total_bytes_wire * 8;
     // 溢出判断
     assign combine_overflow = (total_bytes_wire > DATA_BYTE_WD);
 
     // 数据拼接
     localparam MAX_CONCAT_BITS = 2 * DATA_WD;
-    logic [MAX_CONCAT_BITS-1:0] concat_data;
-    logic [MAX_CONCAT_BITS-1:0] concat_data_left_aligned;
+    reg [MAX_CONCAT_BITS-1:0] concat_data_wire;
+    reg [MAX_CONCAT_BITS-1:0] concat_data_left_aligned_wire;
     always_comb begin
-        concat_data = {data_1, data_2};
-        concat_data_left_aligned = concat_data << (DATA_WD - cnt1_reg*8);
+        concat_data_wire = {data_1, data_2};
+        concat_data_left_aligned_wire = concat_data_wire << (DATA_WD - cnt1_wire*8);
     end
    
     //combined_data
-    logic [DATA_WD-1:0] combined_data_1_wire, combined_data_2_wire;
     always_comb begin
-        combined_data_1_wire  = concat_data_left_aligned[MAX_CONCAT_BITS-1:MAX_CONCAT_BITS-DATA_WD];
-        combined_data_2_wire = concat_data_left_aligned[DATA_WD-1:0]>>(MAX_CONCAT_BITS-total_bits_wire);
+        combined_data_1_wire  = concat_data_left_aligned_wire[MAX_CONCAT_BITS-1:MAX_CONCAT_BITS-DATA_WD];
+        combined_data_2_wire = concat_data_left_aligned_wire[DATA_WD-1:0]>>(MAX_CONCAT_BITS-total_bits_wire);
     end
-    assign combined_data_1  = combined_data_1_wire;
-    assign combined_data_2   = combined_data_2_wire;
-
+   
     //keep
-    logic [DATA_BYTE_WD-1:0] combined_keep_1_wire,combined_keep_2_wire;
     always_comb begin
         combined_keep_1_wire = '0;
         for (int i = 0; i < DATA_BYTE_WD; i++) begin
@@ -74,7 +70,5 @@ module data_combiner #(
             end
         end
     end
-    assign combined_keep_1  = combined_keep_1_wire;
-    assign combined_keep_2  = combined_keep_2_wire;
 
 endmodule

@@ -28,7 +28,7 @@ module axi_stream_insert_header #(
     input [BYTE_CNT_WD-1 : 0] byte_insert_cnt,
     output ready_insert
 );
-    reg ready_in_reg;
+    reg ready_in_wire;
 
     //输出端skidbuffer
     reg valid_out_buf_reg;
@@ -53,7 +53,7 @@ module axi_stream_insert_header #(
     wire [DATA_WD-1 : 0] data_header_buf_wire;
     wire [DATA_BYTE_WD-1 : 0] keep_header_buf_wire;
     wire [BYTE_CNT_WD-1 : 0] byte_cnt_header_buf_wire;
-    reg ready_header_buf_reg;
+    reg ready_header_buf_wire;
     skidbuffer #(
 		.DW(DATA_WD+DATA_BYTE_WD+BYTE_CNT_WD)
     ) header_buf(
@@ -62,7 +62,7 @@ module axi_stream_insert_header #(
         .o_ready(ready_insert),
 		.i_data({data_insert, keep_insert, byte_insert_cnt}),
 		.o_valid(valid_header_buf_wire), 
-        .i_ready(ready_header_buf_reg&&rst_n),
+        .i_ready(ready_header_buf_wire&&rst_n),
 		.o_data({data_header_buf_wire, keep_header_buf_wire, byte_cnt_header_buf_wire})
 	);
 
@@ -72,22 +72,21 @@ module axi_stream_insert_header #(
     reg [DATA_WD-1 : 0] next_head_buf_reg;
     reg [DATA_BYTE_WD-1 : 0] next_keep_buf_reg;
     //用于拼接的两个数据
-    reg [DATA_WD-1:0] data_to_be_combined_1_reg;
-    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_1_reg;
-    reg [DATA_WD-1:0] data_to_be_combined_2_reg;
-    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_2_reg;
+    reg [DATA_WD-1:0] data_to_be_combined_1_wire;
+    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_1_wire;
+    wire [DATA_WD-1:0] data_to_be_combined_2_wire;
+    reg [DATA_BYTE_WD-1:0] keep_to_be_combined_2_wire;
     always_comb begin
-        if((!valid_out_buf_reg&&need_head_reg)||(valid_out_buf_reg&&need_head_reg&&last_out_buf_reg))begin
-            {data_to_be_combined_1_reg, keep_to_be_combined_1_reg} = {data_header_buf_wire, keep_header_buf_wire};
-        end else begin
-            {data_to_be_combined_1_reg, keep_to_be_combined_1_reg} = {next_head_buf_reg, next_keep_buf_reg};
+        {data_to_be_combined_1_wire, keep_to_be_combined_1_wire} = {next_head_buf_reg, next_keep_buf_reg};
+        if(need_head_reg&&(!valid_out_buf_reg||(valid_out_buf_reg&&last_out_buf_reg)))begin
+            {data_to_be_combined_1_wire, keep_to_be_combined_1_wire} = {data_header_buf_wire, keep_header_buf_wire};
         end
     end
+    assign data_to_be_combined_2_wire = data_in;
     always_comb begin
+        keep_to_be_combined_2_wire = keep_in;
         if(valid_out_buf_reg&&need_head_reg&&!last_out_buf_reg)begin
-            {data_to_be_combined_2_reg, keep_to_be_combined_2_reg} = '0;
-        end else begin
-            {data_to_be_combined_2_reg, keep_to_be_combined_2_reg} = {data_in, keep_in};
+            keep_to_be_combined_2_wire = '0;
         end
     end
     //拼接后的数据，1左侧贴靠，2右侧贴靠
@@ -96,20 +95,20 @@ module axi_stream_insert_header #(
     wire combine_overflow_wire;
     wire [DATA_BYTE_WD-1 : 0] combined_keep_1_wire;
     wire [DATA_BYTE_WD-1 : 0] combined_keep_2_wire;
-    data_combiner #(
+    data_combiner_32 #(
         .DATA_WD(DATA_WD),
         .DATA_BYTE_WD(DATA_BYTE_WD),
         .BYTE_CNT_WD(BYTE_CNT_WD)
     ) combiner(
-        .data_1(data_to_be_combined_1_reg),
-        .keep_1(keep_to_be_combined_1_reg),
-        .data_2(data_to_be_combined_2_reg),
-        .keep_2(keep_to_be_combined_2_reg),
-        .combined_data_1(combined_data_1_wire),
-        .combined_data_2(combined_data_2_wire),
+        .data_1(data_to_be_combined_1_wire),
+        .keep_1(keep_to_be_combined_1_wire),
+        .data_2(data_to_be_combined_2_wire),
+        .keep_2(keep_to_be_combined_2_wire),
+        .combined_data_1_wire(combined_data_1_wire),
+        .combined_data_2_wire(combined_data_2_wire),
         .combine_overflow(combine_overflow_wire),
-        .combined_keep_1(combined_keep_1_wire),
-        .combined_keep_2(combined_keep_2_wire)
+        .combined_keep_1_wire(combined_keep_1_wire),
+        .combined_keep_2_wire(combined_keep_2_wire)
     );
     //valid_out_buf_reg,need_head_reg
     always_ff @(posedge clk) begin
@@ -134,8 +133,7 @@ module axi_stream_insert_header #(
             next_head_buf_reg <= '0;
             next_keep_buf_reg <= '0;
         end else begin
-            if(valid_out_buf_reg&&!ready_out_buf_wire)begin
-            end else if(!valid_out_buf_reg&&!need_head_reg&&!valid_in)begin
+            if((valid_out_buf_reg&&!ready_out_buf_wire)||(!valid_out_buf_reg&&!need_head_reg&&!valid_in))begin
             end else begin
                 last_out_buf_reg <= !combine_overflow_wire;
                 data_out_buf_reg <= combined_data_1_wire;
@@ -145,30 +143,30 @@ module axi_stream_insert_header #(
             end
         end
     end
-    //ready_in_reg and ready_header_buf_reg
+    //ready_in_wire and ready_header_buf_wire
     always_comb begin
         if(valid_out_buf_reg)begin
             if(need_head_reg)begin
                 if(last_out_buf_reg)begin
-                    ready_in_reg = ready_out_buf_wire&&valid_header_buf_wire;
-                    ready_header_buf_reg = ready_out_buf_wire&&valid_in;
+                    ready_in_wire = ready_out_buf_wire&&valid_header_buf_wire;
+                    ready_header_buf_wire = ready_out_buf_wire&&valid_in;
                 end else begin
-                    ready_in_reg = 0;
-                    ready_header_buf_reg = 0;
+                    ready_in_wire = 0;
+                    ready_header_buf_wire = 0;
                 end
             end else begin
-                ready_in_reg = ready_out_buf_wire;
-                ready_header_buf_reg = 0;
+                ready_in_wire = ready_out_buf_wire;
+                ready_header_buf_wire = 0;
             end
         end else begin
             if(need_head_reg)begin
-                ready_in_reg = valid_header_buf_wire;
-                ready_header_buf_reg = valid_in;
+                ready_in_wire = valid_header_buf_wire;
+                ready_header_buf_wire = valid_in;
             end else begin
-                ready_in_reg = 1;
-                ready_header_buf_reg = 0;
+                ready_in_wire = 1;
+                ready_header_buf_wire = 0;
             end
         end
     end
-    assign ready_in = ready_in_reg&&rst_n;
+    assign ready_in = ready_in_wire&&rst_n;
 endmodule
